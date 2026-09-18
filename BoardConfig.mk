@@ -61,3 +61,9 @@ WIFI_AVOID_IFACE_RESET_MAC_CHANGE := true
 
 # inherit from the proprietary version
 -include vendor/samsung/a2corelte/BoardConfigVendor.mk
+
+
+# Partitions (A2 Core - universal7870_go)
+BOARD_SYSTEMIMAGE_PARTITION_SIZE   := 0x54000000
+BOARD_USERDATAIMAGE_PARTITION_SIZE := 0x334000000
+BOARD_CACHEIMAGE_PARTITION_SIZE    := 0x2800000
