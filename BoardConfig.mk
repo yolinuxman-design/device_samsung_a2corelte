@@ -29,9 +29,6 @@ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(DEVICE_PATH)/bluetooth
 TARGET_PREBUILT_KERNEL := device/samsung/a2corelte/prebuilt/Image
 TARGET_PREBUILT_DTB := device/samsung/a2corelte/prebuilt/dtb.img
 
-
-BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
-
 # HIDL
 DEVICE_MANIFEST_FILE := $(DEVICE_PATH)/configs/manifest.xml
 
@@ -79,3 +76,5 @@ BOARD_FLASH_BLOCK_SIZE := 131072
 BOARD_KERNEL_SEPARATED_DT := false
 BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_PATH)/bootimg.mk
 BOARD_MKBOOTIMG_ARGS += --board SRPSB21A012KU
+
+BOARD_KERNEL_CMDLINE := androidboot.wificountrycode=00 androidboot.selinux=permissive
