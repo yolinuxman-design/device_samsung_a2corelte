@@ -25,6 +25,8 @@ $(call inherit-product, device/samsung/a2corelte/device.mk)
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
+PRODUCT_LOCALES := en_US en_GB
+
 # Device identifier. This must come after all inclusions
 PRODUCT_DEVICE := a2corelte
 PRODUCT_NAME := lineage_a2corelte
