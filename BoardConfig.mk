@@ -78,3 +78,5 @@ BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_PATH)/bootimg.mk
 BOARD_MKBOOTIMG_ARGS += --board SRPSB21A012KU
 
 BOARD_KERNEL_CMDLINE := androidboot.wificountrycode=00 androidboot.selinux=permissive
+
+WITH_DEXPREOPT := false
