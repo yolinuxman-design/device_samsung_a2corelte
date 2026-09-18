@@ -26,6 +26,8 @@ BOARD_HAVE_BLUETOOTH := true
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := $(DEVICE_PATH)/bluetooth
 
 # Kernel
+TARGET_PREBUILT_KERNEL := device/samsung/a2corelte/prebuilt/Image
+TARGET_PREBUILT_DTB := device/samsung/a2corelte/prebuilt/dtb.img
 TARGET_KERNEL_CONFIG := exynos7870-a2corelte_defconfig
 
 # HIDL
