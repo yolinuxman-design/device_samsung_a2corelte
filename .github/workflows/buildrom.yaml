@@ -22,18 +22,15 @@ jobs:
         uses: pierotofy/set-swap-space@master
         with:
           swap-size-gb: 12
-
-      - name: Dependencies (Ubuntu 22.04 / LOS 18.1)
+          
+      - name: libncurses5 for prebuilt clang (22.04 workaround)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            bc bison flex build-essential zip unzip curl git rsync \
-            libssl-dev libxml2-utils xsltproc fontconfig lzop schedtool \
-            python-is-python3 openjdk-11-jdk
-          echo "JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> "$GITHUB_ENV"
-          sudo update-alternatives --set java  /usr/lib/jvm/java-11-openjdk-amd64/bin/java  || true
-          sudo update-alternatives --set javac /usr/lib/jvm/java-11-openjdk-amd64/bin/javac || true
-          java -version
+          wget -q http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.2-0ubuntu2_amd64.deb
+          sudo apt-get install -y ./libncurses5_6.2-0ubuntu2_amd64.deb || {
+            sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
+            sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6  /usr/lib/x86_64-linux-gnu/libtinfo.so.5
+            sudo ldconfig
+          }
 
       - name: Repo tool
         run: |
