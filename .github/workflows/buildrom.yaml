@@ -56,10 +56,13 @@ jobs:
           git clone --depth=1 -b aex  https://github.com/yolinuxman-design/android_device_samsung_universal7870-common.git device/samsung/universal7870-common
           ls device/samsung/
 
-      - name: Pre-check sepolicy (fail fast)
+      - name: Pre-check sepolicy (fail fast, avoids a 40-min compile to find policy errors)
         run: |
           cd "$ROM_DIR"
           source build/envsetup.sh
+          export LC_ALL=C
+          # libril and friends come from blobs later; tolerate their absence here
+          export ALLOW_MISSING_DEPENDENCIES=true
           lunch lineage_a2corelte-eng
           mka sepolicy_neverallows
 
