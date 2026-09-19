@@ -56,6 +56,13 @@ jobs:
           git clone --depth=1 -b aex  https://github.com/yolinuxman-design/android_device_samsung_universal7870-common.git device/samsung/universal7870-common
           ls device/samsung/
 
+      - name: Pre-check sepolicy (fail fast)
+        run: |
+          cd "$ROM_DIR"
+          source build/envsetup.sh
+          lunch lineage_a2corelte-eng
+          mka sepolicy_neverallows
+
       - name: Build images, then package
         run: |
           cd "$ROM_DIR"
