@@ -28,7 +28,7 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/audio/mixer_gains.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_gains.xml
 
 # Launch Android API level
-PRODUCT_SHIPPING_API_LEVEL := 27
+# PRODUCT_SHIPPING_API_LEVEL := 27
 
 # Bootanimation
 TARGET_SCREEN_HEIGHT := 540
