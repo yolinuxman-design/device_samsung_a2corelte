@@ -1,4 +1,4 @@
-name: Build LineageOS 18.1 (a2corelte)
+name: Build LineageOS 17.1 (a2corelte)
 
 on:
   workflow_dispatch:
@@ -31,6 +31,27 @@ jobs:
             sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6  /usr/lib/x86_64-linux-gnu/libtinfo.so.5
             sudo ldconfig
           }
+          
+      - name: Base dependencies (22.04)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison flex zip unzip curl wget git rsync lzop schedtool \
+            libxml2-utils xsltproc fontconfig python-is-python3
+
+      - name: Install JDK 9 (LOS 17.1 requires exactly JDK 9; not in 22.04 repos)
+        run: |
+          ZULU_URL=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=9&os=linux&arch=x86_64&java_package=jdk&archive_type=tar.gz&latest=true&release_status=ga&availability_types=CA&certification_tcks=false" | grep -o '"download_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+          echo "Downloading: $ZULU_URL"
+          wget -q "$ZULU_URL" -O zulu9.tar.gz
+          sudo mkdir -p /usr/lib/jvm/zulu-9
+          sudo tar -xzf zulu9.tar.gz -C /usr/lib/jvm/zulu-9 --strip-components=1
+          sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/zulu-9/bin/java 2000
+          sudo update-alternatives --set java /usr/lib/jvm/zulu-9/bin/java
+          sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/zulu-9/bin/javac 2000
+          sudo update-alternatives --set javac /usr/lib/jvm/zulu-9/bin/javac
+          echo "JAVA_HOME=/usr/lib/jvm/zulu-9" >> "$GITHUB_ENV"
+          java -version && javac -version
 
       - name: Repo tool
         run: |
@@ -41,10 +62,10 @@ jobs:
           git config --global user.name "ci"
           git config --global user.email "ci@ci.local"
 
-      - name: Sync LineageOS 18.1
+      - name: Sync LineageOS 17.1
         run: |
           mkdir -p "$ROM_DIR" && cd "$ROM_DIR"
-          repo init -u https://github.com/LineageOS/android.git -b lineage-18.1 --depth=1
+          repo init -u https://github.com/LineageOS/android.git -b lineage-17.1 --depth=1
           repo sync -c --no-tags --no-clone-bundle --optimized-fetch -j$(nproc)
           rm -rf .repo
           df -h /
@@ -52,9 +73,15 @@ jobs:
       - name: Device trees (yolinuxman-design, no vendor/dump blobs)
         run: |
           cd "$ROM_DIR"
-          git clone --depth=1 -b main https://github.com/yolinuxman-design/device_samsung_a2corelte.git device/samsung/a2corelte
-          git clone --depth=1 -b aex  https://github.com/yolinuxman-design/android_device_samsung_universal7870-common.git device/samsung/universal7870-common
+          git clone --depth=1 -b 17.1 https://github.com/yolinuxman-design/device_samsung_a2corelte.git device/samsung/a2corelte
+          git clone --depth=1 -b 17.1  https://github.com/yolinuxman-design/android_device_samsung_universal7870-common.git device/samsung/universal7870-common
           ls device/samsung/
+          
+      - name: Drop source-built webview (saves ~2h; no WebView at runtime)
+        run: |
+          cd "$ROM_DIR"
+          rm -rf external/chromium-webview
+          echo 'PRODUCT_PACKAGES_REMOVE += webview' >> device/samsung/a2corelte/device.mk
 
       - name: Pre-check sepolicy (fail fast, avoids a 40-min compile to find policy errors)
         run: |
