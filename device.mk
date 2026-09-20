@@ -16,12 +16,7 @@
 
 DEVICE_PATH := device/samsung/a2corelte
 
-# Permissions
-PRODUCT_COPY_FILES += \
-    frameworks/native/data/etc/android.hardware.nfc.hce.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.hce.xml \
-    frameworks/native/data/etc/android.hardware.nfc.hcef.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.hcef.xml \
-    frameworks/native/data/etc/android.hardware.nfc.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.nfc.xml
-
+ 
 # Custom mixer_paths
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/audio/mixer_paths.xml:$(TARGET_COPY_OUT_VENDOR)/etc/mixer_paths.xml \
@@ -36,8 +31,8 @@ TARGET_SCREEN_WIDTH := 960
 
 # Graphics
 PRODUCT_AAPT_CONFIG := normal
-PRODUCT_AAPT_PREF_CONFIG := xhdpi
-PRODUCT_AAPT_PREBUILT_DPI := xhdpi hdpi
+PRODUCT_AAPT_PREF_CONFIG := hdpi
+PRODUCT_AAPT_PREBUILT_DPI := hdpi
 
 # Bluetooth
 PRODUCT_PACKAGES += \
