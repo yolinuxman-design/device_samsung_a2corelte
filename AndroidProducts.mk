@@ -14,9 +14,12 @@
 # limitations under the License.
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/lineage_a2corelte.mk
+    $(LOCAL_DIR)/lineage_a2corelte.mk \
+    $(LOCAL_DIR)/lineage_go_a2corelte.mk
 
 COMMON_LUNCH_CHOICES := \
     lineage_a2corelte-user \
     lineage_a2corelte-userdebug \
-    lineage_a2corelte-eng
+    lineage_a2corelte-eng \
+    lineage_go_a2corelte-userdebug \
+    lineage_go_a2corelte-eng
