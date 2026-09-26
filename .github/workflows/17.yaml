@@ -1,0 +1,143 @@
+name: Build LineageOS 17.1 (a2corelte)
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: "Product to build"
+        type: choice
+        options:
+          - lineage_go_a2corelte
+          - lineage_a2corelte
+        default: lineage_go_a2corelte
+
+permissions:
+  contents: write
+
+env:
+  ROM_DIR: ${{ github.workspace }}/src
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Maximize runner space
+        uses: rokibhasansagar/slimhub_actions@main
+
+      - name: Swap
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 12
+
+      - name: libncurses5 for prebuilt clang (22.04 workaround)
+        run: |
+          wget -q http://archive.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.2-0ubuntu2_amd64.deb
+          sudo apt-get install -y ./libncurses5_6.2-0ubuntu2_amd64.deb || {
+            sudo ln -sf /usr/lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/x86_64-linux-gnu/libncurses.so.5
+            sudo ln -sf /usr/lib/x86_64-linux-gnu/libtinfo.so.6  /usr/lib/x86_64-linux-gnu/libtinfo.so.5
+            sudo ldconfig
+          }
+
+      - name: Base dependencies (22.04)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison flex zip unzip curl wget git rsync lzop schedtool \
+            libxml2-utils xsltproc fontconfig python-is-python3
+
+      - name: Install JDK 9 (LOS 17.1 requires exactly JDK 9; not in 22.04 repos)
+        run: |
+          ZULU_URL=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=9&os=linux&arch=x86_64&java_package=jdk&archive_type=tar.gz&latest=true&release_status=ga&availability_types=CA&certification_tcks=false" | grep -o '"download_url":"[^"]*"' | head -1 | cut -d'"' -f4)
+          echo "Downloading: $ZULU_URL"
+          wget -q "$ZULU_URL" -O zulu9.tar.gz
+          sudo mkdir -p /usr/lib/jvm/zulu-9
+          sudo tar -xzf zulu9.tar.gz -C /usr/lib/jvm/zulu-9 --strip-components=1
+          sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/zulu-9/bin/java 2000
+          sudo update-alternatives --set java /usr/lib/jvm/zulu-9/bin/java
+          sudo update-alternatives --install /usr/bin/javac javac /usr/lib/jvm/zulu-9/bin/javac 2000
+          sudo update-alternatives --set javac /usr/lib/jvm/zulu-9/bin/javac
+          echo "JAVA_HOME=/usr/lib/jvm/zulu-9" >> "$GITHUB_ENV"
+          java -version && javac -version
+
+      - name: Repo tool
+        run: |
+          mkdir -p "$HOME/bin"
+          curl -s https://storage.googleapis.com/git-repo-downloads/repo > "$HOME/bin/repo"
+          chmod +x "$HOME/bin/repo"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+          git config --global user.name "ci"
+          git config --global user.email "ci@ci.local"
+
+      - name: Sync LineageOS 17.1
+        run: |
+          mkdir -p "$ROM_DIR" && cd "$ROM_DIR"
+          repo init -u https://github.com/LineageOS/android.git -b lineage-17.1 --depth=1
+          repo sync -c --no-tags --no-clone-bundle --optimized-fetch -j$(nproc)
+          rm -rf .repo
+          df -h /
+
+      - name: Device trees (17.1 branches)
+        run: |
+          cd "$ROM_DIR"
+          git clone --depth=1 -b 17.1 https://github.com/yolinuxman-design/device_samsung_a2corelte.git device/samsung/a2corelte
+          git clone --depth=1 -b 17.1 https://github.com/yolinuxman-design/android_device_samsung_universal7870-common.git device/samsung/universal7870-common
+          ls device/samsung/
+
+      - name: Drop source-built webview (saves ~2h; no WebView at runtime)
+        run: |
+          cd "$ROM_DIR"
+          rm -rf external/chromium-webview
+          echo 'PRODUCT_PACKAGES_REMOVE += webview' >> device/samsung/a2corelte/device.mk
+
+      - name: Pre-check sepolicy (fail fast)
+        run: |
+          cd "$ROM_DIR"
+          source build/envsetup.sh
+          export LC_ALL=C
+          export ALLOW_MISSING_DEPENDENCIES=true
+          lunch ${{ inputs.product }}-eng
+          mka sepolicy_neverallows
+
+      - name: Build images
+        run: |
+          cd "$ROM_DIR"
+          source build/envsetup.sh
+          export LC_ALL=C
+          export ALLOW_MISSING_DEPENDENCIES=true
+          lunch ${{ inputs.product }}-eng
+          set -o pipefail
+          mka systemimage bootimage vendorimage 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          ls -lah out/target/product/a2corelte/ | tee -a "$GITHUB_WORKSPACE/build.log"
+
+      - name: Extract error summary
+        if: failure()
+        run: |
+          awk '/^FAILED:/{c=40} c&&c--' "$GITHUB_WORKSPACE/build.log" | head -150 > error-summary.txt
+
+      - name: Upload error summary
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: error-summary
+          path: error-summary.txt
+
+      - name: Upload log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+
+      - name: Release artifacts
+        if: hashFiles('src/out/target/product/a2corelte/boot.img') != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.product }}-${{ github.run_id }}
+          files: |
+            src/out/target/product/a2corelte/boot.img
+            src/out/target/product/a2corelte/system.img
+            src/out/target/product/a2corelte/vendor.img
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
