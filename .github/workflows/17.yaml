@@ -91,6 +91,11 @@ jobs:
           rm -rf external/chromium-webview
           echo 'PRODUCT_PACKAGES_REMOVE += webview' >> device/samsung/a2corelte/device.mk
 
+      - name: Drop AOSP sample RIL (links libril, which only exists with blobs)
+        run: |
+          cd "$ROM_DIR"
+          rm -rf hardware/ril/reference-ril
+
       - name: Pre-check sepolicy (fail fast)
         run: |
           cd "$ROM_DIR"
