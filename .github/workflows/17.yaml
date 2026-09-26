@@ -96,6 +96,16 @@ jobs:
           cd "$ROM_DIR"
           rm -rf hardware/ril/reference-ril
 
+      - name: Kernel-header stub + drop camera HAL (prebuilt-kernel blobless build)
+        run: |
+          cd "$ROM_DIR"
+          # 1) Stub TARGET_KERNEL_SOURCE so generated_kernel_includes succeeds (empty output)
+          mkdir -p kernel/samsung/exynos7870/include
+          printf 'KERNELVERSION = 3.18.0\n\nPHONY += headers_install\nheaders_install:\n\t@mkdir -p $(O)/usr/include\n' > kernel/samsung/exynos7870/Makefile
+          # 2) Drop camera.exynos5 (needs real kernel headers + camera firmware blobs)
+          sed -i 's|^[[:space:]]*camera\.exynos5[[:space:]]*\\[[:space:]]*$|    # camera.exynos5 removed: blobless build|' device/samsung/universal7870-common/device-common.mk
+          grep -n "camera.exynos5" device/samsung/universal7870-common/device-common.mk || echo "camera.exynos5 dropped OK"
+
       - name: Pre-check sepolicy (fail fast)
         run: |
           cd "$ROM_DIR"
