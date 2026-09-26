@@ -1,4 +1,4 @@
-name: Build LineageOS 17.1 (a2corelte)
+name: a2corelte-lineage 17.1 go
 
 on:
   workflow_dispatch:
